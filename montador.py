@@ -167,6 +167,17 @@ def lower_bits():
     return imediato
 
 def jump_calc(LABEL, instruction_pos):
+    
+    entrada.seek(0) #Coloca o ponteiro no inicio da lista
+    for linha in entrada:
+        linha = linha.strip()
+        if linha == ".text":
+            break
+    for linha in entrada:
+        linha = linha.strip()
+        if linha == LABEL:
+            break
+    
     if(LABEL < instruction_pos):
         amount = LABEL
 
@@ -177,16 +188,28 @@ def instruction_op_code(instruction):
     tipo_r = ['add', 'sub', 'and', 'nor', 'xor', 'or', 'jr', 'slt', 'addu', 
               'subu', 'sll', 'srl', 'clo', 'sra', 'srav', 'mult', 'div', 'movn'
               , 'mfhi', 'mflo', 'teq', 'jalr', 'sltu']
-    tipo_f = ['add.d', 'add.s', 'sub.d', 'sub.s', 'c.eq.d', 
-              'c.eq.s', 'mul.d', 'mul.s', 'div.d', 'div.s']
+    tipo_f_s = ['add.s', 'sub.s', 'c.eq.s', 'mul.s', 'div.s']
+    tipo_f_d = ['add.d', 'sub.d', 'c.eq.d', 'mul.d', 'div.d']
     
     if instruction[0] in tipo_r:
         return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[3]) + register_coder(instruction[1]) + bit_filler() + r_function(instruction[0]))
     
-    if instruction[0] in tipo_f:
+    if instruction[0] in tipo_f_s:
         opcode = '010001'
-        return opcode
+        return instruction_hex(opcode + '10000' + register_f_coder(instruction[3]) + register_f_coder(instruction[2]) + register_f_coder(instruction[1]) + f_function(instruction[0]))
     
+    if instruction[0] in tipo_f_d:
+        opcode = '010001'
+        return instruction_hex(opcode + '10001' + register_f_coder(instruction[3]) + register_f_coder(instruction[2]) + register_f_coder(instruction[1]) + f_function(instruction[0]))
+    
+    if (instruction[0] == 'c.eq.d'):
+        opcode = '010001'
+        return instruction_hex(opcode + '10001' + register_f_coder(instruction[2]) +register_f_coder(instruction[1]) + f_function(instruction[0]))
+
+    if (instruction[0] == 'c.eq.s'):
+        opcode = '010001'
+        return instruction_hex(opcode + '10000' + register_f_coder(instruction[2]) +register_f_coder(instruction[1]) + f_function(instruction[0]))
+
     if(instruction[0] == 'lw'):
         opcode = '100011'
         return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
@@ -217,19 +240,19 @@ def instruction_op_code(instruction):
     
     if(instruction[0] == 'addi'):
         opcode = '001000'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
     
     if(instruction[0] == 'andi'):
         opcode = '001100'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
     
     if(instruction[0] == 'ori'):
         opcode = '001101'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
     
     if(instruction[0] == 'xori'):
         opcode = '001110'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
         
     if(instruction[0] == 'bgez'):
         opcode = '000001'
@@ -237,11 +260,15 @@ def instruction_op_code(instruction):
 
     if(instruction[0] == 'madd'):
         opcode = '011100'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + bit_filler() + bit_filler() + bit_filler())
 
-    if(instruction[0] == 'msubu' or instruction[0] == 'mul'):
+    if(instruction[0] == 'mul'):
         opcode = '011100'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[3]) + register_coder(instruction[1]) + bit_filler() + '000010')
+    
+    if(instruction[0] == 'msubu'):
+        opcode = '011100'
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + bit_filler() + bit_filler() + '000101')
     
     if(instruction[0] == 'bgezal'):
         opcode = '000001'
@@ -249,7 +276,7 @@ def instruction_op_code(instruction):
 
     if(instruction[0] == 'addiu'):
         opcode = '001001'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
 
     if(instruction[0] == 'lb'):
         opcode = '100000'
@@ -261,7 +288,7 @@ def instruction_op_code(instruction):
 
     if(instruction[0] == 'slti'):
         opcode = '001010'
-        return opcode
+        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
     if(instruction[0] == 'li'):
         instruction[0] = 'addi'
@@ -345,7 +372,7 @@ def offset_to_binary(offset):
     
 #for i in range(32):
  #   print(f'f{i} ' + register_f_coder(f'f{i}'))
- 
+
 def instruction_hex(binary):
     hexa = hex(int(binary, 2))[2:]
 

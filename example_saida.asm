@@ -2,7 +2,7 @@
 a: .word 1, 2, 3
 
 .text
-li $t0, 100000
+add.s $f2, $f0, $f1
 lw $t1, 0($t0)
 lw $t2, 4($t0)
 lw $t3, 8($t0)
