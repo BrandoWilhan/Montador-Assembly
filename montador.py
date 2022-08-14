@@ -143,8 +143,26 @@ def upper_bits(imediato):
         imediato = imediato[:16]
     if(decimal):
         imediato = offset_to_binary(imediato)
-    
 
+    return imediato
+
+def lower_bits():
+    
+    decimal = False
+
+    for i in range(2, 10):
+        if(f'{i}' in imediato):
+                decimal = True        
+    if('x' in imediato):
+        imediato = imediato.lstrip("0x")
+        imediato = imediato[4:]
+        imediato[:4] += 4*'0'
+        imediato = bin(int(imediato, 16))[2:]
+        if(len(imediato) < 32):
+            imediato = (32 - len(imediato))*'0' + imediato
+        imediato = imediato[:16]
+    if(decimal):
+        imediato = offset_to_binary(imediato)
 
     return imediato
 
@@ -246,11 +264,8 @@ def instruction_op_code(instruction):
         return opcode
     
     if(instruction[0] == 'li'):
-        if(int(instruction[2], 16) > 10):
-            instruction.pop(1)
-            instruction.insert('1',1)
-            return instruction_hex(instruction_op_code('lui')) + '\n' + instruction_hex(instruction_op_code('ori'))
-        return instruction_hex(instruction_op_code('addi'))
+        instruction[0] = 'addi'
+        return instruction_hex(instruction_op_code(instruction))
 #Função que recebe a instrução e retorna seu codigo
 #tipo r
 def r_function(funct): #O retorno é declarado como uma string, pois em casos com 0 a esquerda 
