@@ -126,6 +126,32 @@ def register_f_coder(register):
 def bit_filler():
         return '00000'
 
+def upper_bits(imediato):
+    
+    decimal = False
+
+    for i in range(2, 10):
+        if(f'{i}' in imediato):
+                decimal = True        
+    if('x' in imediato):
+        imediato = imediato.lstrip("0x")
+        imediato = imediato[:4]
+        imediato += 4*'0'
+        imediato = bin(int(imediato, 16))[2:]
+        if(len(imediato) < 32):
+            imediato = (32 - len(imediato))*'0' + imediato
+        imediato = imediato[:16]
+    if(decimal):
+        imediato = offset_to_binary(imediato)
+    
+
+
+    return imediato
+
+def jump_calc(LABEL, instruction_pos):
+    if(LABEL < instruction_pos):
+        amount = LABEL
+
 def instruction_op_code(instruction):
     
     opcode = '000000' #tipo r default
@@ -137,7 +163,7 @@ def instruction_op_code(instruction):
               'c.eq.s', 'mul.d', 'mul.s', 'div.d', 'div.s']
     
     if instruction[0] in tipo_r:
-        return opcode + register_coder(instruction[2]) + register_coder(instruction[3]) + register_coder(instruction[1]) + bit_filler() + r_function(instruction[0])
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[3]) + register_coder(instruction[1]) + bit_filler() + r_function(instruction[0]))
     
     if instruction[0] in tipo_f:
         opcode = '010001'
@@ -145,11 +171,11 @@ def instruction_op_code(instruction):
     
     if(instruction[0] == 'lw'):
         opcode = '100011'
-        return opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2])
+        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
     if(instruction[0] == 'sw'):
         opcode = '101011'
-        return opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2])
+        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
     if(instruction[0] == 'j'):
         opcode = '000010'
@@ -167,10 +193,9 @@ def instruction_op_code(instruction):
         opcode = '000101'
         return opcode
     
-    
     if(instruction[0] == 'lui'):
         opcode = '001111'
-        return opcode
+        return instruction_hex(opcode + bit_filler() + register_coder(instruction[1]) + upper_bits(instruction[2]))
     
     if(instruction[0] == 'addi'):
         opcode = '001000'
@@ -210,19 +235,22 @@ def instruction_op_code(instruction):
 
     if(instruction[0] == 'lb'):
         opcode = '100000'
-        return opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2])
+        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
 
     if(instruction[0] == 'sb'):
         opcode = '101000'
-        return opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2])
+        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
 
     if(instruction[0] == 'slti'):
         opcode = '001010'
         return opcode
     
-    if(instruction[0] == 'lui'):
-        return instruction_op_code('lui') + '\n' + instruction_op_code('ori')
-
+    if(instruction[0] == 'li'):
+        if(int(instruction[2], 16) > 10):
+            instruction.pop(1)
+            instruction.insert('1',1)
+            return instruction_hex(instruction_op_code('lui')) + '\n' + instruction_hex(instruction_op_code('ori'))
+        return instruction_hex(instruction_op_code('addi'))
 #Função que recebe a instrução e retorna seu codigo
 #tipo r
 def r_function(funct): #O retorno é declarado como uma string, pois em casos com 0 a esquerda 
@@ -333,11 +361,11 @@ for linha in entrada:
     if linha == ".text":
         break
 linhas = entrada.readlines()
-print(ler_linha(linhas[12]))
+print(ler_linha(linhas[0]))
 
 entrada.close
 
-print(instruction_hex(instruction_op_code(ler_linha(linhas[12]))))
+print(instruction_op_code(ler_linha(linhas[0])))
 
 
 

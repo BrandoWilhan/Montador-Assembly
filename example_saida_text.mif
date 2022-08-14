@@ -2,8 +2,8 @@ DEPTH = 4096;
 WIDTH = 32;
 ADDRESS_RADIX = HEX;
 DATA_RADIX = HEX;
-CONTENT
-BEGIN
+CONTENT                      
+BEGIN                       
 
 00000000 : 3c011001;  % 5: li $t0, 0x10010000 %
 00000001 : 34280000;
