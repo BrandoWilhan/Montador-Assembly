@@ -168,6 +168,8 @@ def lower_bits():
 
 def jump_calc(LABEL, instruction_pos):
     
+    contador = 0
+    
     entrada.seek(0) #Coloca o ponteiro no inicio da lista
     for linha in entrada:
         linha = linha.strip()
@@ -175,19 +177,19 @@ def jump_calc(LABEL, instruction_pos):
             break
     for linha in entrada:
         linha = linha.strip()
+        contador += 1
         if linha == LABEL:
+            achou = contador
             break
     
-    if(LABEL < instruction_pos):
-        amount = LABEL
 
 def instruction_op_code(instruction):
     
     opcode = '000000' #tipo r default
 
     tipo_r = ['add', 'sub', 'and', 'nor', 'xor', 'or', 'jr', 'slt', 'addu', 
-              'subu', 'sll', 'srl', 'clo', 'sra', 'srav', 'mult', 'div', 'movn'
-              , 'mfhi', 'mflo', 'teq', 'jalr', 'sltu']
+              'subu', 'sll', 'srl', 'sra', 'srav', 'mult', 'div', 'movn'
+              , 'mfhi', 'mflo', 'sltu']
     tipo_f_s = ['add.s', 'sub.s', 'c.eq.s', 'mul.s', 'div.s']
     tipo_f_d = ['add.d', 'sub.d', 'c.eq.d', 'mul.d', 'div.d']
     
@@ -202,11 +204,15 @@ def instruction_op_code(instruction):
         opcode = '010001'
         return instruction_hex(opcode + '10001' + register_f_coder(instruction[3]) + register_f_coder(instruction[2]) + register_f_coder(instruction[1]) + f_function(instruction[0]))
     
-    if (instruction[0] == 'c.eq.d'):
+    if(instruction[0] == 'clo'):
+        opcode = '011100'
+        return instruction_hex(opcode + register_coder(instruction[2]) + bit_filler() + register_coder(instruction[1]) + '00000' + r_function(instruction[0]))
+
+    if(instruction[0] == 'c.eq.d'):
         opcode = '010001'
         return instruction_hex(opcode + '10001' + register_f_coder(instruction[2]) +register_f_coder(instruction[1]) + f_function(instruction[0]))
 
-    if (instruction[0] == 'c.eq.s'):
+    if(instruction[0] == 'c.eq.s'):
         opcode = '010001'
         return instruction_hex(opcode + '10000' + register_f_coder(instruction[2]) +register_f_coder(instruction[1]) + f_function(instruction[0]))
 
@@ -218,6 +224,10 @@ def instruction_op_code(instruction):
         opcode = '101011'
         return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
+    if(instruction[0] == 'teq'):
+        opcode = '000000'
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + bit_filler() + bit_filler() + r_function(instruction[0]))
+
     if(instruction[0] == 'j'):
         opcode = '000010'
         return opcode
@@ -301,50 +311,70 @@ def r_function(funct): #O retorno é declarado como uma string, pois em casos co
     # madd? (Multiply add)
     if(funct == "add"):
         return '100000'
+
     if(funct == "sub"):
         return  '100010'
+
     if(funct == "and"):
         return '100100'
+
     if(funct == "nor"):
         return '100111'
+
     if(funct == "xor"):
         return '100110'
+
     if(funct == "or"):
         return  '100101'
+
     if(funct == "jr"):
         return '001000'
+
     if(funct == "slt"):
         return '101010'
+
     if(funct == "addu"):
         return '100001'
+
     if(funct == "subu"):
         return '100011' 
+
     if(funct == "sll"):
         return '000000'
+
     if(funct == "srl"):
         return '000010'
+
     if(funct == "clo"): 
         return '100001'
+
     if(funct == "sra"):
         return '000011'
+
     if(funct == "srav"):
         return '000111'
+
     if(funct == "mult"):
         return '011000'
+
     if(funct == "div"):
         return '011010'
-    #if(funct == "movn"): 
-        #coloca $t1 como $t2 se $t3 não for zero
-        #function=??? (chamar função de comparação)
+
+    if(funct == "movn"): 
+        return '001011'
+        
     if(funct == "mfhi"):
         return  '010000'
+
     if(funct == "mflo"):
         return '010010'
-    #if(funct == "teq"):
-        #Faz alguma coisa(?) se $t1 igual a $t2
-        #00100: equal
+
+    if(funct == "teq"):
+        return '110100'
+
     if(funct == "jalr"):
         return '001001'
+
     if(funct == "sltu"):
         return '101011'
 #tipo f
@@ -403,11 +433,11 @@ for linha in entrada:
     if linha == ".text":
         break
 linhas = entrada.readlines()
-print(ler_linha(linhas[0]))
 
 entrada.close
 
-print(instruction_op_code(ler_linha(linhas[0])))
+for i in range(len(linhas)):
+    print(instruction_op_code(ler_linha(linhas[i])))
 
 
 
