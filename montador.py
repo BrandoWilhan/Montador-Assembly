@@ -141,12 +141,12 @@ def upper_bits(imediato):
         if(len(imediato) < 32):
             imediato = (32 - len(imediato))*'0' + imediato
         imediato = imediato[:16]
-    if(decimal):
-        imediato = offset_to_binary(imediato)
+    #if(decimal):
+     #   imediato = offset_to_binary(imediato)
 
     return imediato
 
-def lower_bits():
+def lower_bits(imediato):
     
     decimal = False
 
@@ -156,17 +156,17 @@ def lower_bits():
     if('x' in imediato):
         imediato = imediato.lstrip("0x")
         imediato = imediato[4:]
-        imediato[:4] += 4*'0'
+        imediato += 4*'0'
         imediato = bin(int(imediato, 16))[2:]
         if(len(imediato) < 32):
             imediato = (32 - len(imediato))*'0' + imediato
         imediato = imediato[:16]
-    if(decimal):
-        imediato = offset_to_binary(imediato)
+    #if(decimal):
+     #   imediato = offset_to_binary(imediato)
 
     return imediato
 
-def jump_calc(LABEL, instruction_pos):
+def jump_calc(LABEL):
     
     contador = 0
     
@@ -179,8 +179,8 @@ def jump_calc(LABEL, instruction_pos):
         linha = linha.strip()
         contador += 1
         if linha == LABEL:
-            achou = contador
             break
+    return contador
     
 
 def instruction_op_code(instruction):
@@ -250,19 +250,19 @@ def instruction_op_code(instruction):
     
     if(instruction[0] == 'addi'):
         opcode = '001000'
-        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[1]) + offset_to_binary(instruction[3]))
     
     if(instruction[0] == 'andi'):
         opcode = '001100'
-        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[1]) + offset_to_binary(instruction[3]))
     
     if(instruction[0] == 'ori'):
         opcode = '001101'
-        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[1]) + offset_to_binary(instruction[3]))
     
     if(instruction[0] == 'xori'):
         opcode = '001110'
-        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + offset_to_binary(instruction[3]))
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[1]) + offset_to_binary(instruction[3]))
         
     if(instruction[0] == 'bgez'):
         opcode = '000001'
@@ -286,7 +286,7 @@ def instruction_op_code(instruction):
 
     if(instruction[0] == 'addiu'):
         opcode = '001001'
-        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[1]) + offset_to_binary(instruction[3]))
 
     if(instruction[0] == 'lb'):
         opcode = '100000'
@@ -298,11 +298,32 @@ def instruction_op_code(instruction):
 
     if(instruction[0] == 'slti'):
         opcode = '001010'
-        return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
+        return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[1]) + offset_to_binary(instruction[3]))
     
     if(instruction[0] == 'li'):
-        instruction[0] = 'addi'
-        return instruction_hex(instruction_op_code(instruction))
+        temp_register = instruction[1]
+        temp_imediate = instruction[2]
+        
+        if(int(instruction[2], 16) >= 65536):
+            instruction[0] = 'lui'
+            instruction[1] = '1'
+            first = instruction_op_code(instruction)
+            instruction[0] = 'ori'
+            instruction[1] = temp_register
+            instruction[2] = '1'
+            instruction.append('')
+            instruction[3] = lower_bits(temp_imediate)
+            second = instruction_op_code(instruction)
+            return first + '\n' + second        
+        else:
+            instruction[0] = 'addi'
+            instruction.append('')
+            instruction[3] = instruction[2]
+            instruction[2] = '0'
+            instruction[3] = instruction[3].lstrip("0x")
+            instruction[3] = int(instruction[3],16)
+            instruction[3] = str(instruction[3])
+            return instruction_op_code(instruction)
 #Função que recebe a instrução e retorna seu codigo
 #tipo r
 def r_function(funct): #O retorno é declarado como uma string, pois em casos com 0 a esquerda 
