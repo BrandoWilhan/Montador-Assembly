@@ -1,5 +1,8 @@
 from dis import Instruction
 from turtle import rt
+entrada = open('example_saida.asm', 'r')
+saida_text = open('saida_text.mif', 'w')
+saida_data = open('saida_data.mif', 'w')
 
 #decodificar registradores
 def register_coder(register): 
@@ -182,7 +185,6 @@ def jump_calc(LABEL):
             break
     return contador
     
-
 def instruction_op_code(instruction):
     
     opcode = '000000' #tipo r default
@@ -455,12 +457,29 @@ for linha in entrada:
         break
 linhas = entrada.readlines()
 
-entrada.close
+saida_data.write("DEPTH = 16384;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n")
+saida_text.write("DEPTH = 4096;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n\n")
 
 for i in range(len(linhas)):
     print(instruction_op_code(ler_linha(linhas[i])))
 
+count = 0
+adress = 0
+for linha in linhas:
+    nova_linha = ler_linha(linhas[count])
+    adress_str = offset_to_binary(str(adress))
+    adress_str = hex(int(adress_str, 2))[2:]
+    if(len(adress_str) < 8):
+        adress_str = (8 - len(adress_str))*'0' + adress_str
 
+    print(adress_str)
+    
+    
+    saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[count])) + ";" + "\n")
+    count += 1 
 
-
-
+saida_text.write("\nEND;")
+saida_text.close()
+saida_data.write("\nEND;")
+saida_data.close()
+entrada.close()
