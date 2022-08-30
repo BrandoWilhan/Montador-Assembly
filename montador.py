@@ -185,7 +185,7 @@ def jump_calc(LABEL):
             break
     return contador
     
-def instruction_op_code(instruction):
+def instruction_op_code(instruction, adress = None):
     
     opcode = '000000' #tipo r default
 
@@ -316,7 +316,7 @@ def instruction_op_code(instruction):
             instruction.append('')
             instruction[3] = lower_bits(temp_imediate)
             second = instruction_op_code(instruction)
-            return first + '\n' + second        
+            return first + ';' +'\n' + adress + ' : ' + second        
         else:
             instruction[0] = 'addi'
             instruction.append('')
@@ -414,6 +414,12 @@ def f_function(funct): #OpCode: 010001    #Format: (s)10000
         return '110010'
 
     #       c.eq.s(compara igualdade com precisão simples), c.eq.d(... precisão dupla)
+
+def addzero(hexa):
+    if(len(hexa) < 8):
+        hexa = (8 - len(hexa))*'0' + hexa 
+        return hexa
+
 def offset_to_binary(offset):
 
     imediato = bin(int(offset))[2:]
@@ -433,8 +439,6 @@ def instruction_hex(binary):
         hexa = '0' + hexa
     return hexa
 
- 
-entrada = open('example_saida.asm', 'r')
 #Filtra a linha 
 def filtra(lin):
     lin = lin.replace("(", " ")
@@ -457,25 +461,43 @@ for linha in entrada:
         break
 linhas = entrada.readlines()
 
-saida_data.write("DEPTH = 16384;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n")
+saida_data.write("DEPTH = 16384;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n\n")
 saida_text.write("DEPTH = 4096;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n\n")
 
-for i in range(len(linhas)):
-    print(instruction_op_code(ler_linha(linhas[i])))
+
 
 count = 0
-adress = 0
+seq = 0 
 for linha in linhas:
-    nova_linha = ler_linha(linhas[count])
+    
+    adress = count
+    nova_linha = ler_linha(linhas[seq])
     adress_str = offset_to_binary(str(adress))
     adress_str = hex(int(adress_str, 2))[2:]
-    if(len(adress_str) < 8):
-        adress_str = (8 - len(adress_str))*'0' + adress_str
+    adress_str = addzero(adress_str)
+    if(linha[:2] == 'li'):
+        adress = count + 1
+        adress_prox = offset_to_binary(str(adress))
+        adress_prox = hex(int(adress_prox, 2))[2:]
+        adress_prox = addzero(adress_prox)
+        saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq]), adress_prox) + ";" + "\n")
+        count += 1
+    else:
+        saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq])) + ";" + "\n")
+    count += 1
+    seq += 1
 
-    print(adress_str)
-    
-    
-    saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[count])) + ";" + "\n")
+count = 0
+for linha in linhas:
+    adress = count
+    valor = count + 1
+    adress_str = offset_to_binary(str(adress))
+    adress_str = hex(int(adress_str, 2))[2:]
+    valor_str = offset_to_binary(str(valor))
+    valor_str = hex(int(valor_str, 2))[2:]
+    adress_str = addzero(adress_str)
+    valor_str = addzero(valor_str)
+    saida_data.write(adress_str + " : " + valor_str  + ";" + "\n")
     count += 1 
 
 saida_text.write("\nEND;")
