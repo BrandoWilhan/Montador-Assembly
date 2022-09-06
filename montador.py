@@ -1,7 +1,3 @@
-
-from atexit import register
-
-
 entrada = open('lab212018TDNivel2.asm', 'r')
 saida_text = open('saida_text.mif', 'w')
 saida_data = open('saida_data.mif', 'w')
