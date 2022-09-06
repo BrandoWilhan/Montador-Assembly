@@ -1,6 +1,8 @@
-from dis import Instruction
-from turtle import rt
-entrada = open('example_saida.asm', 'r')
+
+from atexit import register
+
+
+entrada = open('lab212018TDNivel2.asm', 'r')
 saida_text = open('saida_text.mif', 'w')
 saida_data = open('saida_data.mif', 'w')
 
@@ -189,9 +191,8 @@ def instruction_op_code(instruction, adress = None):
     
     opcode = '000000' #tipo r default
 
-    tipo_r = ['add', 'sub', 'and', 'nor', 'xor', 'or', 'jr', 'slt', 'addu', 
-              'subu', 'sll', 'srl', 'sra', 'srav', 'mult', 'div', 'movn'
-              , 'mfhi', 'mflo', 'sltu']
+    tipo_r = ['add', 'sub', 'and', 'nor', 'xor', 'or', 'slt', 'addu', 
+              'subu', 'srav', 'movn', 'sltu']
     tipo_f_s = ['add.s', 'sub.s', 'c.eq.s', 'mul.s', 'div.s']
     tipo_f_d = ['add.d', 'sub.d', 'c.eq.d', 'mul.d', 'div.d']
     
@@ -210,6 +211,34 @@ def instruction_op_code(instruction, adress = None):
         opcode = '011100'
         return instruction_hex(opcode + register_coder(instruction[2]) + bit_filler() + register_coder(instruction[1]) + '00000' + r_function(instruction[0]))
 
+    if(instruction[0] == 'mult'):
+        opcode = '000000'
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + bit_filler() + bit_filler() + r_function(instruction[0]))
+    
+    if(instruction[0] == 'div'):
+        opcode = '000000'
+        return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + bit_filler() + bit_filler() + r_function(instruction[0]))
+
+    if(instruction[0] == 'mfhi'):
+        opcode = '000000'
+        return instruction_hex(opcode + bit_filler() + bit_filler() + register_coder(instruction[1]) + r_function(instruction[0]))
+    
+    if(instruction[0] == 'mflo'):
+        opcode = '000000'
+        return instruction_hex(opcode + bit_filler() + bit_filler() + register_coder(instruction[1]) + r_function(instruction[0]))
+    
+    if(instruction[0] == 'sll'):
+        opcode = '000000'
+        return instruction_hex(opcode)
+    
+    if(instruction[0] == 'srl'):
+        opcode = '000000'
+        return instruction_hex(opcode)
+
+    if(instruction[0] == 'sra'):
+        opcode = '000000'
+        return instruction_hex(opcode + bit_filler() + register_coder(instruction[2]) + register_coder(instruction[1]) + register_coder(instruction[3]) + r_function(instruction[0]))
+
     if(instruction[0] == 'c.eq.d'):
         opcode = '010001'
         return instruction_hex(opcode + '10001' + register_f_coder(instruction[2]) +register_f_coder(instruction[1]) + f_function(instruction[0]))
@@ -223,7 +252,7 @@ def instruction_op_code(instruction, adress = None):
         return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
     if(instruction[0] == 'sw'):
-        opcode = '101011'
+        opcode = '000000'
         return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
     if(instruction[0] == 'teq'):
@@ -245,6 +274,10 @@ def instruction_op_code(instruction, adress = None):
     if(instruction[0] == 'bne'):
         opcode = '000101'
         return opcode
+    
+    if(instruction[0] == 'jr'):
+        opcode = '000000'
+        return instruction_hex(opcode)
     
     if(instruction[0] == 'lui'):
         opcode = '001111'
@@ -401,6 +434,7 @@ def r_function(funct): #O retorno é declarado como uma string, pois em casos co
     if(funct == "sltu"):
         return '101011'
 #tipo f
+
 def f_function(funct): #OpCode: 010001    #Format: (s)10000
     if(funct == "add.s" or funct == "add.d"):
         return '000000'
@@ -420,6 +454,7 @@ def addzero(hexa):
         hexa = (8 - len(hexa))*'0' + hexa 
         return hexa
 
+
 def offset_to_binary(offset):
 
     imediato = bin(int(offset))[2:]
@@ -429,29 +464,30 @@ def offset_to_binary(offset):
     
     return imediato
     
-#for i in range(32):
- #   print(f'f{i} ' + register_f_coder(f'f{i}'))
-
 def instruction_hex(binary):
     hexa = hex(int(binary, 2))[2:]
 
     if(len(hexa) < 8):
-        hexa = '0' + hexa
+        hexa =(8 - len(hexa))*'0' + hexa
     return hexa
 
 #Filtra a linha 
 def filtra(lin):
     lin = lin.replace("(", " ")
-    lin = lin.replace(")", "")
-    lin = lin.replace("$","")
-    lin = lin.replace(",","")
-    lin = lin.replace("Label: ", "")
+    lin = lin.replace(")", " ")
+    lin = lin.replace("$"," ")
+    lin = lin.replace(","," ")
     return lin
 
 #Recebe uma linha e retorna os dados dela
 def ler_linha(linha):
     nova_l = filtra(linha)
     instrucao = nova_l.split() #transforma linha em umas lista
+    for x in instrucao:
+        if(":" in x):
+            instrucao.remove(x)
+        if(x == "jal"):
+            instrucao[1] = ''
     return instrucao
 
 entrada.seek(0) #Coloca o ponteiro no inicio da lista
@@ -471,7 +507,6 @@ seq = 0
 for linha in linhas:
     
     adress = count
-    nova_linha = ler_linha(linhas[seq])
     adress_str = offset_to_binary(str(adress))
     adress_str = hex(int(adress_str, 2))[2:]
     adress_str = addzero(adress_str)
@@ -487,18 +522,35 @@ for linha in linhas:
     count += 1
     seq += 1
 
+
+entrada.seek(0) #Coloca o ponteiro no inicio da lista
+linhas = entrada.readlines()
+
 count = 0
 for linha in linhas:
-    adress = count
-    valor = count + 1
-    adress_str = offset_to_binary(str(adress))
-    adress_str = hex(int(adress_str, 2))[2:]
-    valor_str = offset_to_binary(str(valor))
-    valor_str = hex(int(valor_str, 2))[2:]
-    adress_str = addzero(adress_str)
-    valor_str = addzero(valor_str)
-    saida_data.write(adress_str + " : " + valor_str  + ";" + "\n")
-    count += 1 
+    
+    if(".text" in linha):
+        break
+
+    nova_linha = ler_linha(linha)
+    valor_str = " "
+    for x in nova_linha:
+        if ("x" in x):
+            adress_str = offset_to_binary(str(count))
+            adress_str = hex(int(adress_str, 2))[2:]
+            adress_str = addzero(adress_str)
+            valor_str = x[2:]
+            saida_data.write(adress_str + " : " + valor_str + ";" + "\n")
+            count += 1 
+        if(x.isdigit()):
+            adress_str = offset_to_binary(str(count))
+            adress_str = hex(int(adress_str, 2))[2:]
+            adress_str = addzero(adress_str)
+            valor_str = hex(int(x))[2:]
+            valor_str = addzero(valor_str)
+            saida_data.write(adress_str + " : " + valor_str + ";" + "\n")
+            count += 1 
+
 
 saida_text.write("\nEND;")
 saida_text.close()

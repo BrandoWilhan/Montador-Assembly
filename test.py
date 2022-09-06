@@ -1,18 +1,25 @@
-imediato = '0x10010000'
-
-decimal = False
-
-if('x' in imediato):
-    imediato = imediato.lstrip("0x")
-    imediato = imediato[4:]
-    imediato += 4*'0'
-    imediato = bin(int(imediato, 16))[2:]
-    if(len(imediato) < 32):
-        imediato = (32 - len(imediato))*'0' + imediato
-    imediato = imediato[:16]
-
+def register_code(register):
+    reg = ' '
+    for c in range(1, 32):
+        if(register == str(c)):
+            reg = bin(c)[2:]
+            reg1 = reg.split()
+            if(len(reg) < 2):
+                reg1.insert(0, '0')
+                reg1.insert(0, '0')
+                reg1.insert(0, '0')
+                reg1.insert(0, '0')
+            elif(len(reg) < 3):
+                reg1.insert(0, '0')
+                reg1.insert(0, '0')
+                reg1.insert(0, '0')
+            elif(len(reg) < 4):
+                reg1.insert(0, '0')
+                reg1.insert(0, '0')
+            elif(len(reg) < 5):          
+                reg1.insert(0, '0')
+            reg = ''.join(reg1)
     
-if(len(imediato) < 16):
-    imediato = (16 - len(imediato))*'0' + imediato
+    return reg
 
-print(imediato)
+print(register_code('10'))
