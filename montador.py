@@ -1,6 +1,8 @@
-entrada = open('lab212018TDNivel2.asm', 'r')
+entrada = open('lab212018TDNivel3.asm', 'r')
 saida_text = open('saida_text.mif', 'w')
 saida_data = open('saida_data.mif', 'w')
+
+
 
 #decodificar registradores
 def register_coder(register): 
@@ -100,6 +102,7 @@ def register_coder(register):
     
     return reg
 
+
 def register_f_coder(register):
 
     for i in range(32):
@@ -124,8 +127,10 @@ def register_f_coder(register):
 
     return reg
 
+
 def bit_filler():
         return '00000'
+
 
 def upper_bits(imediato):
     
@@ -147,6 +152,7 @@ def upper_bits(imediato):
 
     return imediato
 
+
 def lower_bits(imediato):
     
     decimal = False
@@ -167,23 +173,8 @@ def lower_bits(imediato):
 
     return imediato
 
-def jump_calc(LABEL):
-    
-    contador = 0
-    
-    entrada.seek(0) #Coloca o ponteiro no inicio da lista
-    for linha in entrada:
-        linha = linha.strip()
-        if linha == ".text":
-            break
-    for linha in entrada:
-        linha = linha.strip()
-        contador += 1
-        if linha == LABEL:
-            break
-    return contador
-    
-def instruction_op_code(instruction, adress = None):
+
+def instruction_op_code(instruction, adress = None, counter = None):
     
     opcode = '000000' #tipo r default
 
@@ -191,7 +182,7 @@ def instruction_op_code(instruction, adress = None):
               'subu', 'srav', 'movn', 'sltu']
     tipo_f_s = ['add.s', 'sub.s', 'c.eq.s', 'mul.s', 'div.s']
     tipo_f_d = ['add.d', 'sub.d', 'c.eq.d', 'mul.d', 'div.d']
-    
+
     if instruction[0] in tipo_r:
         return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[3]) + register_coder(instruction[1]) + bit_filler() + r_function(instruction[0]))
     
@@ -225,11 +216,11 @@ def instruction_op_code(instruction, adress = None):
     
     if(instruction[0] == 'sll'):
         opcode = '000000'
-        return instruction_hex(opcode)
+        return instruction_hex(opcode + bit_filler() + register_coder(instruction[2]) + register_coder(instruction[1]) + register_coder(instruction[3]))
     
     if(instruction[0] == 'srl'):
         opcode = '000000'
-        return instruction_hex(opcode)
+        return instruction_hex(opcode + bit_filler() + register_coder(instruction[2]) + register_coder(instruction[1]) + register_coder(instruction[3]))
 
     if(instruction[0] == 'sra'):
         opcode = '000000'
@@ -248,7 +239,7 @@ def instruction_op_code(instruction, adress = None):
         return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
     if(instruction[0] == 'sw'):
-        opcode = '000000'
+        opcode = '101011'
         return instruction_hex(opcode + register_coder(instruction[3]) + register_coder(instruction[1]) + offset_to_binary(instruction[2]))
     
     if(instruction[0] == 'teq'):
@@ -257,24 +248,24 @@ def instruction_op_code(instruction, adress = None):
 
     if(instruction[0] == 'j'):
         opcode = '000010'
-        return opcode
-    
+        return instruction_hex(opcode + addzero_j(counter))
+
     if(instruction[0] == 'jal'):
         opcode = '000011'
-        return opcode
+        return instruction_hex(opcode + addzero_j(counter))
 
     if(instruction[0] == 'beq'):
         opcode = '000100'
-        return opcode
+        return instruction_hex(opcode)
     
     if(instruction[0] == 'bne'):
         opcode = '000101'
-        return opcode
+        return instruction_hex(opcode)
     
     if(instruction[0] == 'jr'):
         opcode = '000000'
-        return instruction_hex(opcode)
-    
+        return instruction_hex(opcode + addzero_j(counter))
+
     if(instruction[0] == 'lui'):
         opcode = '001111'
         return instruction_hex(opcode + bit_filler() + register_coder(instruction[1]) + upper_bits(instruction[2]))
@@ -297,8 +288,8 @@ def instruction_op_code(instruction, adress = None):
         
     if(instruction[0] == 'bgez'):
         opcode = '000001'
-        return opcode
-
+        return instruction_hex(opcode)
+    
     if(instruction[0] == 'madd'):
         opcode = '011100'
         return instruction_hex(opcode + register_coder(instruction[1]) + register_coder(instruction[2]) + bit_filler() + bit_filler() + bit_filler())
@@ -313,7 +304,7 @@ def instruction_op_code(instruction, adress = None):
     
     if(instruction[0] == 'bgezal'):
         opcode = '000001'
-        return opcode
+        return instruction_hex(opcode)
 
     if(instruction[0] == 'addiu'):
         opcode = '001001'
@@ -331,7 +322,7 @@ def instruction_op_code(instruction, adress = None):
         opcode = '001010'
         return instruction_hex(opcode + register_coder(instruction[2]) + register_coder(instruction[1]) + offset_to_binary(instruction[3]))
     
-    if(instruction[0] == 'li'):
+    if(instruction[0] == 'li' or instruction[0] == 'la'):
         temp_register = instruction[1]
         temp_imediate = instruction[2]
         
@@ -442,13 +433,26 @@ def f_function(funct): #OpCode: 010001    #Format: (s)10000
         return '000011'
     if(funct == "c.eq.s" or funct == "c.eq.d"):
         return '110010'
-
     #       c.eq.s(compara igualdade com precisão simples), c.eq.d(... precisão dupla)
 
 def addzero(hexa):
     if(len(hexa) < 8):
         hexa = (8 - len(hexa))*'0' + hexa 
         return hexa
+
+
+def addzero_j(address_j):
+    address_j = offset_to_binary(address_j)
+
+    if(len(address_j) < 26):
+        address_j = (26 - len(address_j))*'0' + address_j   
+
+    return address_j
+
+
+def addzero_b(address_b):
+    
+    address_b = offset_to_binary(address_b)
 
 
 def offset_to_binary(offset):
@@ -459,7 +463,8 @@ def offset_to_binary(offset):
         imediato = (16 - len(imediato))*'0' + imediato
     
     return imediato
-    
+
+
 def instruction_hex(binary):
     hexa = hex(int(binary, 2))[2:]
 
@@ -486,6 +491,63 @@ def ler_linha(linha):
             instrucao[1] = ''
     return instrucao
 
+saida_data.write("DEPTH = 16384;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n\n")
+
+entrada.seek(0) #Coloca o ponteiro no inicio da lista
+linhas = entrada.readlines()
+
+count = 0 #endereço
+how_many = 0 #quantas words no vetor
+address_v = []
+address_n = []
+for linha in linhas:
+    
+    if(".text" in linha):
+        break
+    if(".data" in linha):
+        continue
+    
+    linha_treatment = linha.split()
+    nova_linha = ler_linha(linha)
+    address_n.append(linha_treatment[0].rstrip(':'))
+    valor_str = " "
+    how_many = 0
+    for x in nova_linha:
+        
+        if ("x" in x):
+            how_many += 1
+            address_str = offset_to_binary(str(count))
+            address_str = hex(int(address_str, 2))[2:]
+            address_str = addzero(address_str)
+            valor_str = x[2:]
+            if(len(valor_str) < 8):
+                valor_str = (8 - len(valor_str))*'0' + valor_str
+            saida_data.write(address_str + " : " + valor_str + ";" + "\n")
+            count += 1 
+        if(x.isdigit()):
+            how_many += 1
+            address_str = offset_to_binary(str(count))
+            address_str = hex(int(address_str, 2))[2:]
+            address_str = addzero(address_str)
+            valor_str = hex(int(x))[2:]
+            valor_str = addzero(valor_str)
+            saida_data.write(address_str + " : " + valor_str + ";" + "\n")
+            count += 1 
+    address_v.append(how_many)
+
+#mapeamento de enderenços
+
+mapa = {address_n[0] : "0x10010000"}
+mul = 0
+for x in range(len(address_n)):
+    if(x + 1 < len(address_n)):
+        mapa.update({address_n[x + 1] : hex(int(mapa[address_n[x]], 16) + 4*address_v[mul])})
+        mul += 1
+print(mapa)
+
+saida_text.write("DEPTH = 4096;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n\n")
+
+
 entrada.seek(0) #Coloca o ponteiro no inicio da lista
 for linha in entrada:
     linha = linha.strip()
@@ -493,59 +555,94 @@ for linha in entrada:
         break
 linhas = entrada.readlines()
 
-saida_data.write("DEPTH = 16384;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n\n")
-saida_text.write("DEPTH = 4096;\nWIDTH = 32;\nADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n\n")
-
-
-
 count = 0
-seq = 0 
+seq = 0
+jumps = ['j', 'jal', 'jr']
+branchs = ['beq', 'bne', 'bgez', 'bgezal']
+
+
 for linha in linhas:
     
     adress = count
+    linha_filter = filtra(linha)
+    linha_filter = linha_filter.split()
+    for x in linha_filter:
+        if(":" in x):
+            linha_filter.remove(x)
+
     adress_str = offset_to_binary(str(adress))
     adress_str = hex(int(adress_str, 2))[2:]
     adress_str = addzero(adress_str)
-    if(linha[:2] == 'li'):
+    if(linha_filter[0] == 'li'):
         adress = count + 1
         adress_prox = offset_to_binary(str(adress))
         adress_prox = hex(int(adress_prox, 2))[2:]
         adress_prox = addzero(adress_prox)
         saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq]), adress_prox) + ";" + "\n")
         count += 1
+    
+    elif(linha_filter[0] == 'la'):
+        adress = count + 1
+        adress_prox = offset_to_binary(str(adress))
+        adress_prox = hex(int(adress_prox, 2))[2:]
+        adress_prox = addzero(adress_prox)
+        linha_filter[2] = mapa[linha_filter[2]]
+        linha_filter = ' '.join(map(str, linha_filter))
+        print(linha_filter)
+        saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linha_filter), adress_prox) + ";" + "\n")
+        count += 1
+
+    elif(linha_filter[0] in jumps):
+        contador = 0
+    
+        entrada.seek(0) #Coloca o ponteiro no inicio da lista
+        for linha in entrada:
+            linha = linha.strip()
+            if linha == ".text":
+                break
+        
+        linhas = entrada.readlines()
+        
+        for linha in linhas:
+            nova_linha = filtra(linha)
+            nova_linha = nova_linha.split()
+            nova_linha[0] = nova_linha[0].rstrip(':')
+            if nova_linha[0] == linha_filter[1]:
+                break
+
+            if(nova_linha[0] == 'li' or nova_linha[0] == 'la'):
+                contador += 1
+            contador += 1
+        saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq]), counter = contador) + ";" + "\n")
+    
+    elif(linha_filter[0] in branchs):
+        
+        contador = 0
+    
+        entrada.seek(0) #Coloca o ponteiro no inicio da lista
+        for linha in entrada:
+            linha = linha.strip()
+            if linha == ".text":
+                break
+        
+        linhas = entrada.readlines()
+        
+        for linha in linhas:
+            nova_linha = filtra(linha)
+            nova_linha = nova_linha.split()
+            nova_linha[0] = nova_linha[0].rstrip(':')
+            if nova_linha[0] == linha_filter[1]:
+                break
+
+            if(nova_linha[0] == 'li' or nova_linha[0] == 'la'):
+                contador += 1
+            contador += 1
+        saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq]), counter = contador) + ";" + "\n")
+    
     else:
         saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq])) + ";" + "\n")
     count += 1
     seq += 1
-
-
-entrada.seek(0) #Coloca o ponteiro no inicio da lista
-linhas = entrada.readlines()
-
-count = 0
-for linha in linhas:
-    
-    if(".text" in linha):
-        break
-
-    nova_linha = ler_linha(linha)
-    valor_str = " "
-    for x in nova_linha:
-        if ("x" in x):
-            adress_str = offset_to_binary(str(count))
-            adress_str = hex(int(adress_str, 2))[2:]
-            adress_str = addzero(adress_str)
-            valor_str = x[2:]
-            saida_data.write(adress_str + " : " + valor_str + ";" + "\n")
-            count += 1 
-        if(x.isdigit()):
-            adress_str = offset_to_binary(str(count))
-            adress_str = hex(int(adress_str, 2))[2:]
-            adress_str = addzero(adress_str)
-            valor_str = hex(int(x))[2:]
-            valor_str = addzero(valor_str)
-            saida_data.write(adress_str + " : " + valor_str + ";" + "\n")
-            count += 1 
 
 
 saida_text.write("\nEND;")
