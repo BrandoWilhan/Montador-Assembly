@@ -1,4 +1,6 @@
-entrada = open('lab212018TDNivel3.asm', 'r')
+#nome = input("digite o nome do arquivo: ")
+
+entrada = open('lab212018TDNivel1.asm', 'r')
 saida_text = open('saida_text.mif', 'w')
 saida_data = open('saida_data.mif', 'w')
 
@@ -216,11 +218,11 @@ def instruction_op_code(instruction, adress = None, counter = None):
     
     if(instruction[0] == 'sll'):
         opcode = '000000'
-        return instruction_hex(opcode + bit_filler() + register_coder(instruction[2]) + register_coder(instruction[1]) + register_coder(instruction[3]))
+        return instruction_hex(opcode + bit_filler() + register_coder(instruction[2]) + register_coder(instruction[1]) + register_coder(instruction[3]) + r_function(instruction[0]))
     
     if(instruction[0] == 'srl'):
         opcode = '000000'
-        return instruction_hex(opcode + bit_filler() + register_coder(instruction[2]) + register_coder(instruction[1]) + register_coder(instruction[3]))
+        return instruction_hex(opcode + bit_filler() + register_coder(instruction[2]) + register_coder(instruction[1]) + register_coder(instruction[3]) + r_function(instruction[0]))
 
     if(instruction[0] == 'sra'):
         opcode = '000000'
@@ -256,11 +258,11 @@ def instruction_op_code(instruction, adress = None, counter = None):
 
     if(instruction[0] == 'beq'):
         opcode = '000100'
-        return instruction_hex(opcode)
+        return instruction_hex(opcode + addzero_j(counter))
     
     if(instruction[0] == 'bne'):
         opcode = '000101'
-        return instruction_hex(opcode)
+        return instruction_hex(opcode + addzero_j(counter))
     
     if(instruction[0] == 'jr'):
         opcode = '000000'
@@ -288,7 +290,7 @@ def instruction_op_code(instruction, adress = None, counter = None):
         
     if(instruction[0] == 'bgez'):
         opcode = '000001'
-        return instruction_hex(opcode)
+        return instruction_hex(opcode + addzero_j(counter))
     
     if(instruction[0] == 'madd'):
         opcode = '011100'
@@ -304,7 +306,7 @@ def instruction_op_code(instruction, adress = None, counter = None):
     
     if(instruction[0] == 'bgezal'):
         opcode = '000001'
-        return instruction_hex(opcode)
+        return instruction_hex(opcode + addzero_j(counter))
 
     if(instruction[0] == 'addiu'):
         opcode = '001001'
@@ -506,6 +508,8 @@ for linha in linhas:
         break
     if(".data" in linha):
         continue
+    if(linha == "\n"):
+        continue
     
     linha_treatment = linha.split()
     nova_linha = ler_linha(linha)
@@ -564,6 +568,7 @@ branchs = ['beq', 'bne', 'bgez', 'bgezal']
 for linha in linhas:
     
     adress = count
+    branch = 0
     linha_filter = filtra(linha)
     linha_filter = linha_filter.split()
     for x in linha_filter:
@@ -616,24 +621,18 @@ for linha in linhas:
         saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq]), counter = contador) + ";" + "\n")
     
     elif(linha_filter[0] in branchs):
-        
+        entrada.seek(0, 1)
+        procurar = entrada.readlines()
         contador = 0
     
-        entrada.seek(0) #Coloca o ponteiro no inicio da lista
-        for linha in entrada:
-            linha = linha.strip()
-            if linha == ".text":
+        for linha in procurar:
+            nova_linha_b = filtra(linha)
+            print("entrou")
+            nova_linha_b = nova_linha_b.split()
+            nova_linha_b[0] = nova_linha[0].rstrip(':')
+            print(nova_linha_b)
+            if nova_linha[0] == linha_filter[3]:
                 break
-        
-        linhas = entrada.readlines()
-        
-        for linha in linhas:
-            nova_linha = filtra(linha)
-            nova_linha = nova_linha.split()
-            nova_linha[0] = nova_linha[0].rstrip(':')
-            if nova_linha[0] == linha_filter[1]:
-                break
-
             if(nova_linha[0] == 'li' or nova_linha[0] == 'la'):
                 contador += 1
             contador += 1
