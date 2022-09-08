@@ -1,6 +1,6 @@
-#nome = input("digite o nome do arquivo: ")
+nome = input("digite o nome do arquivo: ")
 
-entrada = open('lab212018TDNivel1.asm', 'r')
+entrada = open(nome, 'r')
 saida_text = open('saida_text.mif', 'w')
 saida_data = open('saida_data.mif', 'w')
 
@@ -341,12 +341,11 @@ def instruction_op_code(instruction, adress = None, counter = None):
             return first + ';' +'\n' + adress + ' : ' + second        
         else:
             instruction[0] = 'addi'
-            instruction.append('')
+            instruction.append(' ')
             instruction[3] = instruction[2]
             instruction[2] = '0'
-            instruction[3] = instruction[3].lstrip("0x")
-            instruction[3] = int(instruction[3],16)
-            instruction[3] = str(instruction[3])
+            #instruction[3] = instruction[3].lstrip("0x")
+           # instruction[3] = instruction[3]
             return instruction_op_code(instruction)
 #Função que recebe a instrução e retorna seu codigo
 #tipo r
@@ -579,13 +578,16 @@ for linha in linhas:
     adress_str = hex(int(adress_str, 2))[2:]
     adress_str = addzero(adress_str)
     if(linha_filter[0] == 'li'):
-        adress = count + 1
-        adress_prox = offset_to_binary(str(adress))
-        adress_prox = hex(int(adress_prox, 2))[2:]
-        adress_prox = addzero(adress_prox)
-        saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq]), adress_prox) + ";" + "\n")
-        count += 1
-    
+        if(int(linha_filter[2]) < 65336):
+            saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq])) + ";" + "\n")
+        else:
+            adress = count + 1
+            adress_prox = offset_to_binary(str(adress))
+            adress_prox = hex(int(adress_prox, 2))[2:]
+            adress_prox = addzero(adress_prox)
+            saida_text.write(adress_str + " : " + instruction_op_code(ler_linha(linhas[seq]), adress_prox) + ";" + "\n")
+            count += 1
+            print("entrou")
     elif(linha_filter[0] == 'la'):
         adress = count + 1
         adress_prox = offset_to_binary(str(adress))
